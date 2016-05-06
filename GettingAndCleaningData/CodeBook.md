@@ -13,10 +13,10 @@ Each record has:
 ##Data Transformation
 The run_analysis.R script performs the following actions to clean, transform and process the raw data:
 
-###1.Merge Separate Data Sets
+###1. Merge Separate Data Sets
 Train and Test data sets were merged to form X, Y and subject data sets
 
-###2.Extract only measurements on the mean and standard deviation for each measurement 
+###2. Extract only measurements on the mean and standard deviation for each measurement 
 Select only columns that have "mean" or "std" in the header
 
 ###3. Use descriptive activity names to name the activities in the data set
@@ -52,5 +52,3 @@ Note:
 '-XYZ' is used to denote 3-axial signals in the X, Y and Z directions.
 - The above labels are appended with either "mean()" or "std()" to indicate mean and standard deviation respectively. 
 - There are no unit of measurements as all features were normalized and bounded within (-1,1).    
-
-
