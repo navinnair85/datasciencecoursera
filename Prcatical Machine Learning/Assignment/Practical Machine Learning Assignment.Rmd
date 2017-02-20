@@ -1,0 +1,93 @@
+---
+title: "Practical Machine Learning Course Assignment"
+author: "NN"
+date: "February 20, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. 
+
+Participants of this project were asked to perform barbell lifts correctly and incorrectly in 5 different ways.The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
+
+##Load libraries and Dataset
+```{R message = FALSE, warnings = FALSE}
+library(knitr)
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(randomForest)
+
+#Load training and test datasets
+training<-read.csv("pml-training.csv")
+testing<- read.csv("pml-testing.csv")
+```
+
+##Data Processing and Cleaning the Data
+First, we will partition the training data into a training dataset (70%) and a test dataset (30%). The actual test dataset provided will remain untouched and used for predicting the test results.
+```{R}
+train_partition<-createDataPartition(training$classe, p = 0.7, list = FALSE)
+train_set<-training[train_partition,]
+test_set<-training[-train_partition,]
+```
+
+Next, we remove variables that are mostly NA
+```{R}
+NAs <- sapply(train_set, function(x) mean(is.na(x)))>.95
+train_set<-train_set[, NAs == FALSE]
+test_set<-test_set[, NAs == FALSE]
+```
+
+Followed by removing the variables which have near zero variance
+```{R}
+nearZeroVariance <- nearZeroVar(train_set)
+train_set <- train_set[,-nearZeroVariance]
+test_set <- test_set[,-nearZeroVariance]
+```
+
+Finally, we remove the variables for identification only, columns 1 to 5.
+```{R}
+train_set <-train_set[,-(1:5)]
+test_set <-test_set[,-(1:5)]
+```
+
+##Building the Prediction Models
+2 models will be used to predict the 'classe' variable in the training set. The model with the higher accuracy will then be used for the quiz portion of the assignment. 
+
+###Random Forest Model
+```{R}
+set.seed(11111)
+controlRandForest<-trainControl(method = "cv", number = 3, verboseIter = FALSE)
+modelFitRandForest<-train(classe ~ ., data = train_set, method = "rf", trControl = controlRandForest)
+modelFitRandForest$finalModel
+
+predictRandForest <- predict(modelFitRandForest, newdata = test_set)
+confusionMatrixRandForest <- confusionMatrix(predictRandForest, test_set$classe)
+confusionMatrixRandForest
+```
+
+###Generalized Boosted Model
+```{R}
+set.seed(11111)
+controlGBM <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+modelFitGBM <-train(classe ~ ., data = train_set, method = "gbm", trControl = controlGBM, verbose = FALSE)
+modelFitGBM$finalModel
+
+predictGBM <-predict(modelFitGBM, newdata = test_set)
+confusionMatrixGBM <- confusionMatrix(predictGBM, test_set$classe)
+confusionMatrixGBM
+```
+
+##Predicting Test Dataset Results
+From the results above, we see that the Random Forest method is more accurate than the Generalized Boosted Model. Using the Random Forest Model to predict the test results:
+
+```{R}
+predictTest<-predict(modelFitRandForest, newdata = testing)
+predictTest
+```
